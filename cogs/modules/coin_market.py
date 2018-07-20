@@ -2,6 +2,7 @@ from bot_logger import logger
 from coinmarketcap import Market
 from currency_converter import CurrencyConverter
 from requests.exceptions import RequestException
+import cryptocompare
 
 fiat_currencies = {
     'AUD': '$', 'BRL': 'R$', 'CAD': '$', 'CHF': 'Fr.',
@@ -205,36 +206,7 @@ class CoinMarket:
             raise CoinMarketException("Failed to format data ({}): {}".format(data['name'],
                                                                               e))
 
-    def get_currency(self, acronym_list, currency, fiat):
-        """
-        Obtains the data of the specified currency and returns them.
-
-        @param acronym_list - list of cryptocurrency acronyms
-        @param currency - the cryptocurrency to search for (i.e. 'bitcoin',
-                          'ethereum')
-        @param fiat - desired fiat currency (i.e. 'EUR', 'USD')
-        """
-        try:
-            isPositivePercent = False
-            fiat = self.fiat_check(fiat)
-            if currency.upper() in acronym_list:
-                try:
-                    data = self.fetch_currency_data(acronym_list[currency.upper()], fiat)[0]
-                except CurrencyException:
-                    formatted_data = acronym_list[currency.upper()]
-                    return formatted_data, isPositivePercent
-            else:
-                data = self.fetch_currency_data(currency, fiat)[0]
-            formatted_data, isPositivePercent = self._format_currency_data(data, fiat)
-            return formatted_data, isPositivePercent
-        except CurrencyException as e:
-            raise
-        except FiatException as e:
-            raise
-        except Exception as e:
-            raise CoinMarketException(e)
-
-    def get_current_currency(self, market_list, acronym_list, currency, fiat):
+    def get_currency(self, market_list, acronym_list, currency, fiat):
         """
         Obtains the data of the specified currency and returns them using
         the current updated market list
@@ -313,26 +285,7 @@ class CoinMarket:
         except Exception as e:
             raise CoinMarketException("Failed to format data: `{}`".format(e))
 
-    def get_stats(self, fiat):
-        """
-        Returns the market stats
-
-        @param fiat - desired fiat currency (i.e. 'EUR', 'USD')
-        @return - formatted market stats
-        """
-        try:
-            fiat = self.fiat_check(fiat)
-            stats = self.fetch_coinmarket_stats(fiat)
-            formatted_stats = self._format_coinmarket_stats(stats, fiat)
-            return formatted_stats
-        except FiatException as e:
-            raise
-        except MarketStatsException as e:
-            raise
-        except Exception as e:
-            raise CoinMarketException(e)
-
-    def get_current_stats(self, market_stats, fiat):
+    def get_stats(self, market_stats, fiat):
         """
         Returns the market stats
 
@@ -350,38 +303,7 @@ class CoinMarket:
         except Exception as e:
             raise CoinMarketException(e)
 
-    def get_multiple_currency(self, acronym_list, currency_list, fiat):
-        """
-        Returns updated info of multiple coin stats
-        @param acronym_list - list of cryptocurrency acronyms
-        @param currency_list - list of cryptocurrencies
-        @param fiat - desired fiat currency (i.e. 'EUR', 'USD')
-        @return - formatted cryptocurrency data
-        """
-        try:
-            fiat = self.fiat_check(fiat)
-            formatted_data = ''
-            data_list = []
-            for currency in currency_list:
-                if acronym_list is not None:
-                    if currency.upper() in acronym_list:
-                        data_list.append(self.fetch_currency_data(acronym_list[currency.upper()], fiat)[0])
-                    else:
-                        data_list.append(self.fetch_currency_data(currency, fiat)[0])
-                else:
-                    data_list.append(self.fetch_currency_data(currency, fiat)[0])
-            data_list.sort(key=lambda x: int(x['rank']))
-            for data in data_list:
-                formatted_data += self._format_currency_data(data, fiat, False)[0] + '\n'
-            return formatted_data
-        except CurrencyException as e:
-            raise
-        except FiatException as e:
-            raise
-        except Exception as e:
-            raise CoinMarketException(e)
-
-    def get_current_multiple_currency(self, market_list, acronym_list, currency_list, fiat, cached_data=None):
+    def get_multiple_currency(self, market_list, acronym_list, currency_list, fiat, cached_data=None):
         """
         Returns updated info of multiple coin stats using the current
         updated market list

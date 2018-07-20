@@ -1,6 +1,7 @@
 from bot_logger import logger
 from cogs.modules.coin_market import CoinMarketException, CurrencyException, FiatException, MarketStatsException
 from discord.errors import Forbidden
+import cryptocompare
 import discord
 
 
